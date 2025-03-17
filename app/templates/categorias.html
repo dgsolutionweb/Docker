@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Categorias - Sistema de Gerenciamento de Estoque{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Categorias</h1>
+    <a href="{{ url_for('nova_categoria') }}" class="btn btn-success">Nova Categoria</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome</th>
+                        <th>Qtd. Produtos</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for categoria in categorias %}
+                    <tr>
+                        <td>{{ categoria.id }}</td>
+                        <td>{{ categoria.nome }}</td>
+                        <td>{{ categoria.produtos|length }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('editar_categoria', id=categoria.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ categoria.id }}">
+                                    Excluir
+                                </button>
+                            </div>
+                            
+                            <!-- Modal de confirmação de exclusão -->
+                            <div class="modal fade" id="deleteModal{{ categoria.id }}" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">Confirmar Exclusão</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p>Tem certeza que deseja excluir a categoria <strong>{{ categoria.nome }}</strong>?</p>
+                                            {% if categoria.produtos|length > 0 %}
+                                            <div class="alert alert-warning">
+                                                <strong>Atenção!</strong> Esta categoria possui {{ categoria.produtos|length }} produto(s) associado(s).
+                                                Ao excluir esta categoria, os produtos ficarão sem categoria.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <a href="{{ url_for('excluir_categoria', id=categoria.id) }}" class="btn btn-danger">Excluir</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">Nenhuma categoria cadastrada.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

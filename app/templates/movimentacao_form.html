@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Nova Movimentação - Sistema de Gerenciamento de Estoque{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Nova Movimentação</h1>
+    <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="">
+            {{ form.csrf_token }}
+            <div class="mb-3">
+                {{ form.produto_id.label(class="form-label") }}
+                {{ form.produto_id(class="form-select" + (" is-invalid" if form.produto_id.errors else ""), disabled=produto is not none) }}
+                {% if form.produto_id.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.produto_id.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if produto %}
+                <div class="form-text mt-2">
+                    Estoque atual: <span class="badge {% if produto.quantidade <= 5 %}bg-danger{% elif produto.quantidade <= 10 %}bg-warning{% else %}bg-success{% endif %}">
+                        {{ produto.quantidade }} unidades
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.tipo.label(class="form-label") }}
+                {{ form.tipo(class="form-select" + (" is-invalid" if form.tipo.errors else "")) }}
+                {% if form.tipo.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.tipo.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.quantidade.label(class="form-label") }}
+                {{ form.quantidade(class="form-control" + (" is-invalid" if form.quantidade.errors else "")) }}
+                {% if form.quantidade.errors %}
+                <div class="invalid-feedback">
+                    {% for error in form.quantidade.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                {{ form.observacao.label(class="form-label") }}
+                {{ form.observacao(class="form-control", rows=3) }}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-outline-secondary me-md-2">Cancelar</a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

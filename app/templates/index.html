@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-md-12 text-center">
+        <h1>Sistema de Gerenciamento de Estoque</h1>
+        <p class="lead">Bem-vindo ao seu sistema de controle de estoque!</p>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Total de Produtos</h5>
+                <p class="card-text display-4">{{ total_produtos }}</p>
+                <a href="{{ url_for('listar_produtos') }}" class="btn btn-primary">Ver Produtos</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Total de Categorias</h5>
+                <p class="card-text display-4">{{ total_categorias }}</p>
+                <a href="{{ url_for('listar_categorias') }}" class="btn btn-primary">Ver Categorias</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Movimentações Recentes</h5>
+                <p class="card-text display-4">{{ total_movimentacoes }}</p>
+                <a href="{{ url_for('listar_movimentacoes') }}" class="btn btn-primary">Ver Movimentações</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Produtos com Estoque Baixo</h5>
+            </div>
+            <div class="card-body">
+                {% if produtos_estoque_baixo %}
+                <ul class="list-group">
+                    {% for produto in produtos_estoque_baixo %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ produto.nome }}
+                        <span class="badge bg-warning rounded-pill">{{ produto.quantidade }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center">Não há produtos com estoque baixo.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Últimas Movimentações</h5>
+            </div>
+            <div class="card-body">
+                {% if ultimas_movimentacoes %}
+                <ul class="list-group">
+                    {% for mov in ultimas_movimentacoes %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ mov.produto.nome }}
+                        <span class="badge {% if mov.tipo == 'entrada' %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                            {{ mov.tipo }}: {{ mov.quantidade }}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-center">Não há movimentações recentes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

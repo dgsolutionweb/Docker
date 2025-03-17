@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:13
+    container_name: estoque_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: DG450159753
+      POSTGRES_DB: estoque_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - estoque_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d estoque_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./app
+    container_name: estoque_app
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://postgres:DG450159753@db:5432/estoque_db
+      SECRET_KEY: chave-super-secreta
+      FLASK_ENV: production
+    volumes:
+      - ./app:/app
+    networks:
+      - estoque_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  estoque_network:
+    driver: bridge
+
+volumes:
+  postgres_data: 

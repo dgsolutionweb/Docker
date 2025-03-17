@@ -1,0 +1,7 @@
+flask==2.2.3
+flask-sqlalchemy==3.0.3
+psycopg2-binary==2.9.5
+python-dotenv==1.0.0
+flask-migrate==4.0.4
+flask-wtf==1.1.1
+wtforms==3.0.1 

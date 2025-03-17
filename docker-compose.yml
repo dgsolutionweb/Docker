@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: DG450159753
       POSTGRES_DB: estoque_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -27,16 +27,13 @@ services:
     restart: always
     ports:
       - "8000:8000"
-    depends_on:
-      - db
     environment:
-      DATABASE_URL: postgresql://postgres:DG450159753@db:5432/estoque_db
+      DATABASE_URL: postgresql://postgres:DG450159753@host.docker.internal:5432/estoque_db
       SECRET_KEY: chave-super-secreta
       FLASK_ENV: production
     volumes:
       - ./app:/app
-    networks:
-      - estoque_network
+    network_mode: "bridge"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 30s

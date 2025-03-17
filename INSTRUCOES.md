@@ -6,7 +6,16 @@ Certifique-se de que sua VPS tenha:
 
 - Docker instalado
 - Docker Compose instalado
-- Portas 8000 (aplicação) e 5432 (PostgreSQL) liberadas no firewall
+- PostgreSQL já rodando em contêiner Docker com porta 5432 exposta
+- Porta 8000 liberada no firewall para a aplicação
+
+## Preparação do Banco de Dados
+
+Antes de iniciar a aplicação, crie um banco de dados chamado `estoque_db` no seu PostgreSQL:
+
+```bash
+docker exec -it SEU_CONTAINER_POSTGRES psql -U postgres -c "CREATE DATABASE estoque_db;"
+```
 
 ## Passos para Implantação
 
@@ -29,13 +38,13 @@ ssh usuario@seu_servidor
 cd /caminho/para/pasta
 ```
 
-4. Inicie os contêineres Docker:
+4. Inicie o contêiner da aplicação:
 
 ```bash
 docker-compose up -d
 ```
 
-5. Verifique se os contêineres estão rodando:
+5. Verifique se o contêiner está rodando:
 
 ```bash
 docker-compose ps
@@ -55,13 +64,13 @@ http://seu_ip_ou_dominio:8000
 
 ## Comandos Úteis
 
-### Parar os contêineres
+### Parar o contêiner
 
 ```bash
 docker-compose down
 ```
 
-### Reiniciar os contêineres
+### Reiniciar o contêiner
 
 ```bash
 docker-compose restart
@@ -77,7 +86,7 @@ docker-compose up --build -d
 ### Acessar o banco de dados PostgreSQL
 
 ```bash
-docker exec -it estoque_db psql -U postgres -d estoque_db
+docker exec -it SEU_CONTAINER_POSTGRES psql -U postgres -d estoque_db
 ```
 
 ### Acessar o shell do contêiner da aplicação
@@ -92,12 +101,6 @@ docker exec -it estoque_app bash
 docker-compose logs -f web
 ```
 
-### Ver logs do banco de dados
-
-```bash
-docker-compose logs -f db
-```
-
 ## Solução de Problemas
 
 1. Se a aplicação não iniciar, verifique os logs:
@@ -106,28 +109,20 @@ docker-compose logs -f db
 docker-compose logs -f web
 ```
 
-2. Se o banco de dados não iniciar, verifique os logs:
+2. Certifique-se de que o PostgreSQL está acessível:
 
 ```bash
-docker-compose logs -f db
+docker exec -it estoque_app ping host.docker.internal
 ```
 
-3. Reinicie os contêineres após alterações no código:
+3. Verifique se o banco de dados estoque_db existe:
+
+```bash
+docker exec -it SEU_CONTAINER_POSTGRES psql -U postgres -c "\l"
+```
+
+4. Reinicie o contêiner após alterações no código:
 
 ```bash
 docker-compose restart web
 ```
-
-4. Verifique o status da rede Docker:
-
-```bash
-docker network ls
-docker network inspect estoque_network
-```
-
-5. Em caso de problemas com o volume do PostgreSQL:
-
-```bash
-docker volume ls
-docker volume inspect postgres_data
-``` 

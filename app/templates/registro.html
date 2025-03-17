@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Registro - Sistema de Gerenciamento de Estoque{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Cadastro de Usuário</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('registro') }}">
+                    {{ form.csrf_token }}
+                    <div class="mb-3">
+                        {{ form.nome.label(class="form-label") }}
+                        {{ form.nome(class="form-control" + (" is-invalid" if form.nome.errors else ""), placeholder="Seu nome completo") }}
+                        {% if form.nome.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.nome.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else ""), placeholder="seu@email.com") }}
+                        {% if form.email.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.email.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.senha.label(class="form-label") }}
+                        {{ form.senha(class="form-control" + (" is-invalid" if form.senha.errors else ""), placeholder="Mínimo 6 caracteres") }}
+                        {% if form.senha.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.senha.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ form.confirmar_senha.label(class="form-label") }}
+                        {{ form.confirmar_senha(class="form-control" + (" is-invalid" if form.confirmar_senha.errors else ""), placeholder="Confirme sua senha") }}
+                        {% if form.confirmar_senha.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.confirmar_senha.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid gap-2">
+                        {{ form.submit(class="btn btn-success") }}
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Já tem uma conta? <a href="{{ url_for('login') }}">Faça login aqui</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

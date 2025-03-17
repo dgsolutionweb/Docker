@@ -1,6 +1,19 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SubmitField
-from wtforms.validators import DataRequired, Optional, NumberRange
+from wtforms import StringField, TextAreaField, FloatField, IntegerField, SelectField, SubmitField, PasswordField, EmailField, BooleanField
+from wtforms.validators import DataRequired, Optional, NumberRange, Email, EqualTo, Length
+
+class LoginForm(FlaskForm):
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    senha = PasswordField('Senha', validators=[DataRequired()])
+    lembrar_me = BooleanField('Lembrar-me')
+    submit = SubmitField('Entrar')
+
+class RegistroForm(FlaskForm):
+    nome = StringField('Nome Completo', validators=[DataRequired(), Length(min=3, max=100)])
+    email = EmailField('Email', validators=[DataRequired(), Email()])
+    senha = PasswordField('Senha', validators=[DataRequired(), Length(min=6)])
+    confirmar_senha = PasswordField('Confirmar Senha', validators=[DataRequired(), EqualTo('senha', message='As senhas devem ser iguais')])
+    submit = SubmitField('Cadastrar')
 
 class CategoriaForm(FlaskForm):
     nome = StringField('Nome', validators=[DataRequired()])

@@ -2,10 +2,12 @@ import os
 from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_migrate import Migrate
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from config import Config
-from models.models import db, Produto, Categoria, Movimentacao
-from models.forms import ProdutoForm, CategoriaForm, MovimentacaoForm
+from models.models import db, Produto, Categoria, Movimentacao, Usuario
+from models.forms import ProdutoForm, CategoriaForm, MovimentacaoForm, LoginForm, RegistroForm
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -13,7 +15,81 @@ app.config.from_object(Config)
 db.init_app(app)
 migrate = Migrate(app, db)
 
+# Configurar o login_manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Por favor, faça login para acessar esta página.'
+login_manager.login_message_category = 'info'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Usuario.query.get(int(user_id))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        usuario = Usuario.query.filter_by(email=form.email.data).first()
+        
+        if usuario is None or not usuario.verificar_senha(form.senha.data):
+            flash('Email ou senha inválidos', 'danger')
+            return redirect(url_for('login'))
+        
+        if not usuario.ativo:
+            flash('Esta conta está desativada. Entre em contato com o administrador.', 'warning')
+            return redirect(url_for('login'))
+        
+        login_user(usuario, remember=form.lembrar_me.data)
+        next_page = request.args.get('next')
+        
+        flash(f'Bem-vindo de volta, {usuario.nome}!', 'success')
+        return redirect(next_page) if next_page else redirect(url_for('index'))
+    
+    return render_template('login.html', form=form)
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = RegistroForm()
+    if form.validate_on_submit():
+        # Verificar se o email já existe
+        usuario_existente = Usuario.query.filter_by(email=form.email.data).first()
+        if usuario_existente:
+            flash('Este email já está em uso. Escolha outro ou faça login.', 'danger')
+            return redirect(url_for('registro'))
+        
+        # Criar novo usuário
+        novo_usuario = Usuario(
+            nome=form.nome.data,
+            email=form.email.data,
+            ativo=True,
+            admin=False  # O primeiro usuário pode ser configurado como admin depois
+        )
+        novo_usuario.set_senha(form.senha.data)
+        
+        db.session.add(novo_usuario)
+        db.session.commit()
+        
+        flash('Cadastro realizado com sucesso! Agora você pode fazer login.', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('registro.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('Você saiu do sistema com sucesso!', 'success')
+    return redirect(url_for('login'))
+
 @app.route('/')
+@login_required
 def index():
     total_produtos = Produto.query.count()
     total_categorias = Categoria.query.count()
@@ -34,11 +110,13 @@ def index():
 
 # Rotas para Produtos
 @app.route('/produtos')
+@login_required
 def listar_produtos():
     produtos = Produto.query.all()
     return render_template('produtos.html', produtos=produtos)
 
 @app.route('/produtos/novo', methods=['GET', 'POST'])
+@login_required
 def novo_produto():
     form = ProdutoForm()
     form.categoria_id.choices = [(c.id, c.nome) for c in Categoria.query.all()]
@@ -60,7 +138,8 @@ def novo_produto():
                 produto_id=produto.id,
                 tipo='entrada',
                 quantidade=form.quantidade.data,
-                observacao='Entrada inicial'
+                observacao='Entrada inicial',
+                usuario_id=current_user.id
             )
             db.session.add(movimentacao)
             db.session.commit()
@@ -71,6 +150,7 @@ def novo_produto():
     return render_template('produto_form.html', form=form, produto=None)
 
 @app.route('/produtos/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
 def editar_produto(id):
     produto = Produto.query.get_or_404(id)
     form = ProdutoForm(obj=produto)
@@ -95,7 +175,8 @@ def editar_produto(id):
                 produto_id=produto.id,
                 tipo=tipo,
                 quantidade=abs(diferenca),
-                observacao=f'Ajuste manual de estoque'
+                observacao=f'Ajuste manual de estoque',
+                usuario_id=current_user.id
             )
             db.session.add(movimentacao)
             
@@ -109,6 +190,7 @@ def editar_produto(id):
     return render_template('produto_form.html', form=form, produto=produto)
 
 @app.route('/produtos/excluir/<int:id>')
+@login_required
 def excluir_produto(id):
     produto = Produto.query.get_or_404(id)
     
@@ -122,6 +204,7 @@ def excluir_produto(id):
     return redirect(url_for('listar_produtos'))
 
 @app.route('/produtos/movimentar/<int:id>', methods=['GET', 'POST'])
+@login_required
 def movimentar_produto(id):
     produto = Produto.query.get_or_404(id)
     form = MovimentacaoForm()
@@ -141,7 +224,8 @@ def movimentar_produto(id):
             produto_id=produto.id,
             tipo=tipo,
             quantidade=quantidade,
-            observacao=form.observacao.data
+            observacao=form.observacao.data,
+            usuario_id=current_user.id
         )
         
         # Atualiza o estoque do produto
@@ -160,11 +244,13 @@ def movimentar_produto(id):
 
 # Rotas para Categorias
 @app.route('/categorias')
+@login_required
 def listar_categorias():
     categorias = Categoria.query.all()
     return render_template('categorias.html', categorias=categorias)
 
 @app.route('/categorias/nova', methods=['GET', 'POST'])
+@login_required
 def nova_categoria():
     form = CategoriaForm()
     
@@ -178,6 +264,7 @@ def nova_categoria():
     return render_template('categoria_form.html', form=form, categoria=None)
 
 @app.route('/categorias/editar/<int:id>', methods=['GET', 'POST'])
+@login_required
 def editar_categoria(id):
     categoria = Categoria.query.get_or_404(id)
     form = CategoriaForm(obj=categoria)
@@ -191,6 +278,7 @@ def editar_categoria(id):
     return render_template('categoria_form.html', form=form, categoria=categoria)
 
 @app.route('/categorias/excluir/<int:id>')
+@login_required
 def excluir_categoria(id):
     categoria = Categoria.query.get_or_404(id)
     
@@ -206,6 +294,7 @@ def excluir_categoria(id):
 
 # Rotas para Movimentações
 @app.route('/movimentacoes')
+@login_required
 def listar_movimentacoes():
     # Filtros
     tipo = request.args.get('tipo')
@@ -240,6 +329,7 @@ def listar_movimentacoes():
     return render_template('movimentacoes.html', movimentacoes=movimentacoes, produtos=produtos)
 
 @app.route('/movimentacoes/nova', methods=['GET', 'POST'])
+@login_required
 def nova_movimentacao():
     form = MovimentacaoForm()
     form.produto_id.choices = [(p.id, p.nome) for p in Produto.query.all()]
@@ -260,7 +350,8 @@ def nova_movimentacao():
             produto_id=produto_id,
             tipo=tipo,
             quantidade=quantidade,
-            observacao=form.observacao.data
+            observacao=form.observacao.data,
+            usuario_id=current_user.id
         )
         
         # Atualiza o estoque do produto
@@ -283,6 +374,11 @@ def now_filter(format_type=''):
         return datetime.now().year
     return datetime.now()
 
+# Adiciona o ano atual ao contexto global dos templates
+@app.context_processor
+def inject_now():
+    return {'current_year': datetime.now().year}
+
 # Inicialização do banco de dados
 @app.before_first_request
 def create_tables():
@@ -298,6 +394,18 @@ def create_tables():
             Categoria(nome='Eletrônicos')
         ]
         db.session.add_all(categorias)
+        db.session.commit()
+        
+    # Cria um usuário administrador padrão se não existir nenhum usuário
+    if Usuario.query.count() == 0:
+        admin = Usuario(
+            nome='Administrador',
+            email='admin@sistema.com',
+            ativo=True,
+            admin=True
+        )
+        admin.set_senha('admin123')
+        db.session.add(admin)
         db.session.commit()
 
 if __name__ == '__main__':

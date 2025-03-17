@@ -13,13 +13,12 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - estoque_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d estoque_db"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   web:
     build: ./app
@@ -27,23 +26,21 @@ services:
     restart: always
     ports:
       - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:DG450159753@host.docker.internal:5432/estoque_db
+      DATABASE_URL: postgresql://postgres:DG450159753@db:5432/estoque_db
       SECRET_KEY: chave-super-secreta
       FLASK_ENV: production
     volumes:
       - ./app:/app
-    network_mode: "bridge"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-networks:
-  estoque_network:
-    driver: bridge
 
 volumes:
   postgres_data: 

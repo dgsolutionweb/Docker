@@ -58,6 +58,7 @@
                         <th>Tipo</th>
                         <th>Quantidade</th>
                         <th>Data</th>
+                        <th>Usuário</th>
                         <th>Observação</th>
                     </tr>
                 </thead>
@@ -73,11 +74,12 @@
                         </td>
                         <td>{{ mov.quantidade }}</td>
                         <td>{{ mov.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>{{ mov.usuario.nome if mov.usuario else 'Sistema' }}</td>
                         <td>{{ mov.observacao or '-' }}</td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="text-center">Nenhuma movimentação encontrada.</td>
+                        <td colspan="7" class="text-center">Nenhuma movimentação encontrada.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

@@ -1,0 +1,20 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Instalar dependências
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn==20.1.0
+
+# Copiar código da aplicação
+COPY . .
+
+# Expor a porta
+EXPOSE 8000
+
+# Ambiente de produção
+ENV FLASK_ENV=production
+
+# Executar Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "app:app"] 
